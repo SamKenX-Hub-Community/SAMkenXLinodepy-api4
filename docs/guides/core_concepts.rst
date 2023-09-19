@@ -49,12 +49,13 @@ certain group.  This library implements filtering with a SQLAlchemy-like
 syntax, where a model's attributes may be used in comparisons to generate
 filters.  For example::
 
+   from linode_api4 import Instance
+
    prod_linodes = client.linode.instances(Instance.group == "production")
 
 Filters may be combined using boolean operators similar to SQLAlchemy::
 
    # and_ and or_ can be imported from the linode package to combine filters
-   from linode_api4 import or_
    prod_or_staging = client.linode.instances(or_(Instance.group == "production",
                                                      Instance.group == "staging"))
 
@@ -66,7 +67,7 @@ Filters may be combined using boolean operators similar to SQLAlchemy::
 Filters are generally only applicable for the type of model you are querying,
 but can be combined to your heart's content.  For numeric fields, the standard
 numeric comparisons are accepted, and work as you'd expect.  See
-:doc:`Filtering Collections<../linode/objects/filtering>` for full details.
+:doc:`Filtering Collections</linode_api4/objects/filtering>` for full details.
 
 Models
 ------
@@ -82,6 +83,7 @@ In addition to looking up models from collections, you can simply import the
 model class and create it by ID.::
 
    from linode_api4 import Instance
+
    my_linode = Instance(client, 123)
 
 All models take a `LinodeClient` as their first parameter, and their ID as the
@@ -93,6 +95,14 @@ Linode Instance's ID).
 Be aware that when creating a model this way, it is _not_ loaded from the API
 immediately.  Models in this library are **lazy-loaded**, and will not be looked
 up until one of their attributes that is currently unknown is accessed.
+
+In order to automatically populate a model for an existing Linode resource,
+consider using the :any:`LinodeClient.load` method::
+
+    from linode_api4 import Instance, Disk
+
+    instance = client.load(Instance, 12345)
+    instance_disk = client.load(Disk, 123, instance.id)
 
 Lazy Loading
 ^^^^^^^^^^^^
@@ -149,9 +159,14 @@ models can also be deleted in a similar fashion.::
 .. note::
 
    Saving a model *may* fail if the values you are attempting to save are invalid.
-   If the values you are attemting to save are coming from an untrusted source,
+   If the values you are attempting to save are coming from an untrusted source,
    be sure to handle a potential :any:`ApiError` raised by the API returning
    an unsuccessful response code.
+
+    When updating an attribute on a model, ensure that the model has been populated
+    *before* any local changes have been made. Attempting to update an attribute
+    and save a model before the model has been populated will result in no changes
+    being applied.
 
 Relationships
 ^^^^^^^^^^^^^
